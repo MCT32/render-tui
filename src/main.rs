@@ -16,10 +16,12 @@ fn main() {
     loop {
         let size = term.size();
         let mut canvas = Canvas::new(size);
-        canvas.draw_line((0, 0), (
-            (size.0-1).try_into().unwrap(),
-            (size.1-1).try_into().unwrap()),
-        b'#');
+
+        let middle = (size.0/2,size.1/2);
+
+        let x = middle.1 as i16 + (time.sin() * (middle.1 - 1) as f32) as i16;
+        let y = middle.0 as i16 + (time.cos() * (middle.0 - 1) as f32) as i16;
+        canvas.draw_line((middle.0 as i16, middle.1 as i16), (y, x), b'#');
 
         term.move_cursor_to(0, 0).unwrap();
         term.write(canvas.flat().as_slice()).unwrap();
