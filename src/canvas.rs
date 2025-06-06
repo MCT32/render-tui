@@ -1,4 +1,4 @@
-use crate::threed::Float2;
+use crate::vector::Float2;
 
 pub struct Canvas {
     size: (u16, u16),

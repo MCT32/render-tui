@@ -1,6 +1,8 @@
 mod canvas;
 use canvas::Canvas;
 
+mod vector;
+
 mod threed;
 use threed::{Camera, Model};
 
