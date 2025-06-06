@@ -12,7 +12,7 @@ impl Canvas {
         let size = termion::terminal_size().unwrap();
         let size_pixels = termion::terminal_size_pixels().unwrap();
 
-        let aspect_ratio = size.0 as f32 / size.1 as f32;
+        let aspect_ratio = size_pixels.0 as f32 / size_pixels.1 as f32;
         let buffer = vec![' '; (size.0 * size.1) as usize];
 
         Self {
