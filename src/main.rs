@@ -2,6 +2,9 @@ mod canvas;
 use canvas::Canvas;
 
 mod vector;
+use vector::Float3;
+
+mod transform;
 
 mod threed;
 use threed::{Camera, Model};
@@ -22,7 +25,7 @@ fn main() {
 
         let camera = Camera::new(canvas.aspect_ratio(), 2.0);
 
-        cube.set_rotation((time, 0.0, 0.0).into());
+        cube.set_rotation(Float3::new(time * 0.85, time, time * 0.65).into());
         cube.draw(&camera, &mut canvas);
 
         canvas.render();

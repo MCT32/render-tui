@@ -1,23 +1,29 @@
 use crate::canvas::Canvas;
 
 use crate::vector::{Float2, Float3};
+use crate::transform::{Transform, Rotation};
 
 pub struct Model {
     verts: Vec<Float3>,
     lines: Vec<(usize, usize)>,
 
-    rotation: Float3,
+    transform: Transform
 }
 
 impl Model {
     pub fn draw(&self, camera: &Camera, canvas: &mut Canvas) {
         for vert in &self.verts {
+            // Apply transform
+            let vert = self.transform.apply(*vert);
+
             let coord = camera.world_to_screen(vert);
             canvas.plot(coord, 'o');
         }
     }
 
-    pub fn set_rotation(&mut self, rotation: Float3) {self.rotation = rotation;}
+    pub fn set_transform(&mut self, transform: Transform) {self.transform = transform;}
+
+    pub fn set_rotation(&mut self, rotation: Rotation) {self.transform.rotation = rotation;}
 
     pub fn cube(start: Float3, end: Float3) -> Self {
         Self {
@@ -45,7 +51,7 @@ impl Model {
                 (2, 6),
                 (3, 7),
             ],
-            rotation: Float3::zero()
+            transform: Default::default(),
         }
     }
 }
@@ -60,7 +66,7 @@ impl Camera {
         Self{ aspect_ratio, fov }
     }
 
-    pub fn world_to_screen(&self, vert: &Float3) -> Float2 {
+    pub fn world_to_screen(&self, vert: Float3) -> Float2 {
         Float2::from((vert.x, vert.z)) / Float2::new(self.aspect_ratio, 1.0) / self.fov
     }
 }
