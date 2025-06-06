@@ -1,36 +1,29 @@
 mod canvas;
 use canvas::Canvas;
 
-mod util;
-use util::ScreenCoord;
+mod threed;
+use threed::{Camera, Model};
 
-use console::Term;
 use std::io::Write;
 use std::thread;
 use std::time::Duration;
 
 fn main() {
-    let mut term = Term::stdout();
-    term.hide_cursor().unwrap();
     let frametime = Duration::from_millis(17);
+
+    let mut cube = Model::cube((-1.0, -1.0, -1.0).into(), (1.0, 1.0, 1.0).into());
 
     let mut time: f32 = 0.0;
 
     loop {
-        let size = term.size();
-        let mut canvas = Canvas::new(size);
+        let mut canvas = Canvas::new();
 
-        let middle: ScreenCoord = <(u16, u16) as TryInto<ScreenCoord>>::try_into(size).unwrap() / 2;
+        let camera = Camera::new(canvas.aspect_ratio(), 2.0);
 
-        let end = middle + ((time.sin() * middle.y as f32) as i16, (time.cos() * middle.x as f32) as i16);
-        canvas.draw_line(middle, end, b'#');
+        cube.set_rotation((time, 0.0, 0.0).into());
+        cube.draw(&camera, &mut canvas);
 
-        //let x = middle.1 as i16 + (time.sin() * (middle.1 - 1) as f32) as i16;
-        //let y = middle.0 as i16 + (time.cos() * (middle.0 - 1) as f32) as i16;
-        //canvas.draw_line((middle.0 as i16, middle.1 as i16), (y, x), b'#');
-
-        term.move_cursor_to(0, 0).unwrap();
-        term.write(canvas.flat().as_slice()).unwrap();
+        canvas.render();
 
         thread::sleep(frametime);
         time += frametime.as_secs_f32();

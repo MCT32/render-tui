@@ -1,104 +1,58 @@
-use crate::util::ScreenCoord;
+use crate::threed::Float2;
 
-#[derive(Debug)]
 pub struct Canvas {
-    buffer: Vec<Vec<u8>>,
+    size: (u16, u16),
+    aspect_ratio: f32,
+    buffer: Vec<char>,
 }
 
 impl Canvas {
-    pub fn new(size: (u16, u16)) -> Self {
+    pub fn new() -> Self {
+        // TODO: Propegate these errors
+        let size = termion::terminal_size().unwrap();
+        let size_pixels = termion::terminal_size_pixels().unwrap();
+
+        let aspect_ratio = size.0 as f32 / size.1 as f32;
+        let buffer = vec![' '; (size.0 * size.1) as usize];
+
         Self {
-            buffer: vec![vec![b' '; size.1 as usize]; size.0 as usize],
+            size,
+            aspect_ratio,
+            buffer,
         }
     }
 
-    pub fn inbounds(&self, coord: ScreenCoord) -> bool {
-        coord.x >= 0 &&
-        coord.y >= 0 &&
-        coord.x < self.buffer[0].len() as i16 &&
-        coord.y < self.buffer.len() as i16
+    pub fn size(&self) -> (u16, u16) { self.size }
+
+    pub fn aspect_ratio(&self) -> f32 { self.aspect_ratio }
+
+    pub fn render(&self) {
+        print!("{}{}", termion::cursor::Goto(1, 1), self.buffer.clone().into_iter().collect::<String>());
     }
 
-    pub fn plot(&mut self, coord: ScreenCoord, byte: u8) {
-        if self.inbounds(coord) {
-            self.buffer[coord.y as usize][coord.x as usize] = byte;
-        }
+    pub fn plot_raw(&mut self, coord: (u16, u16), character: char) {
+        // TODO: Add some bounds checking
+        let coord = self.coord_1d(coord);
+        self.buffer[coord] = character;
     }
 
-    pub fn flat(&self) -> Vec<u8> {
-        self.buffer.concat()
+    pub fn plot(&mut self, coord: Float2, character: char) {
+        // Map from -1 - 1 to 0 - 1
+        let coord = (coord + Float2::new(1.0, 1.0)) / 2.0;
+
+        // Map to screen
+        let coord = coord * Float2::new((&self.size.0 - 1) as f32, (&self.size.1 - 1) as f32);
+
+        // Round
+        let coord = (coord.x as u16, coord.y as u16);
+
+        &mut self.plot_raw(coord, character);
     }
 
-    pub fn draw_line(&mut self, p0: ScreenCoord, p1: ScreenCoord, stroke: u8) {
-        if (p1.x - p0.x).abs() > (p1.y - p0.y).abs() {
-            self.draw_line_h(p0, p1, stroke)
-        } else {
-            self.draw_line_v(p0, p1, stroke)
-        }
-    }
-
-    fn draw_line_h(&mut self, p0: ScreenCoord, p1: ScreenCoord, stroke: u8) {
-        let mut p0 = p0;
-        let mut p1 = p1;
-
-        if p0.x > p1.x {
-            (p0.y, p1.y) = (p1.y, p0.y);
-            (p0.x, p1.x) = (p1.x, p0.x);
-        }
-
-        let dx = p1.x - p0.x;
-        let dy = p1.y - p0.y;
-
-        let dir = if dy < 0 {-1} else {1};
-
-        let dy = dy * dir;
-
-        if dx != 0 {
-            let mut y = p0.y;
-            let mut p = 2*dy - dx;
-            for i in 0..=dx {
-                self.plot((y, (p0.x + i)).into(), stroke);
-
-                if p >= 0 {
-                    y += dir;
-                    p -= 2*dx;
-                }
-
-                p += 2*dy;
-            }
-        }
-    }
-
-    fn draw_line_v(&mut self, p0: ScreenCoord, p1: ScreenCoord, stroke: u8) {
-        let mut p0 = p0;
-        let mut p1 = p1;
-
-        if p0.y > p1.y {
-            (p0.y, p1.y) = (p1.y, p0.y);
-            (p0.x, p1.x) = (p1.x, p0.x);
-        }
-
-        let dx = p1.x - p0.x;
-        let dy = p1.y - p0.y;
-
-        let dir = if dx < 0 {-1} else {1};
-
-        let dx = dx * dir;
-
-        if dy != 0 {
-            let mut x = p0.x;
-            let mut p = 2*dx - dy;
-            for i in 0..=dy {
-                self.plot(((p0.y + i), x).into(), stroke);
-
-                if p >= 0 {
-                    x += dir;
-                    p -= 2*dy;
-                }
-
-                p += 2*dx;
-            }
-        }
+    // 2D coord to 1D buffer coord
+    fn coord_1d(&self, coord: (u16, u16)) -> usize {
+        // TODO: Add some bounds checking
+        (coord.0 + coord.1 * self.size.0) as usize
     }
 }
 
