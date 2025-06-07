@@ -15,7 +15,7 @@ use std::time::Duration;
 fn main() {
     let frametime = Duration::from_millis(17);
 
-    let mut cube = Model::cube((-1.0, -1.0, -1.0).into(), (1.0, 1.0, 1.0).into());
+    let mut cube = Model::load(include_str!("cube.obj"));
 
     let mut time: f32 = 0.0;
 
