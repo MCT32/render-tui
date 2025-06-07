@@ -46,7 +46,7 @@ impl Canvas {
         // Round
         let coord = (coord.x as u16, coord.y as u16);
 
-        &mut self.plot_raw(coord, character);
+        self.plot_raw(coord, character);
     }
 
     // 2D coord to 1D buffer coord

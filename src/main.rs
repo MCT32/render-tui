@@ -9,7 +9,6 @@ mod transform;
 mod threed;
 use threed::{Camera, Model};
 
-use std::io::Write;
 use std::thread;
 use std::time::Duration;
 
