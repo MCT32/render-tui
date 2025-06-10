@@ -5,7 +5,7 @@ use crate::vector::Float2;
 pub struct Canvas {
     size: (u16, u16),
     aspect_ratio: f32,
-    buffer: Vec<Pixel>,
+    buffer: Vec<char>,
 }
 
 impl Canvas {
@@ -15,7 +15,7 @@ impl Canvas {
         let size_pixels = termion::terminal_size_pixels().unwrap();
 
         let aspect_ratio = size_pixels.0 as f32 / size_pixels.1 as f32;
-        let buffer = vec![Pixel::blank(); (size.0 * size.1) as usize];
+        let buffer = vec![' '; (size.0 * size.1) as usize];
 
         Self {
             size,
@@ -32,14 +32,14 @@ impl Canvas {
         print!("{}{}", termion::cursor::Goto(1, 1), self.buffer.iter().fold(String::new(), |a, b| format!("{}{}", a, b.to_string())));
     }
 
-    pub fn plot_raw(&mut self, coord: (u16, u16), pixel: Pixel) {
+    pub fn plot_raw(&mut self, coord: (u16, u16), pixel: char) {
         if coord.0 < self.size.0 && coord.1 < self.size.1 {
             let coord = self.coord_1d(coord);
             self.buffer[coord] = pixel;
         }
     }
 
-    pub fn plot(&mut self, coord: Float2, pixel: Pixel) {
+    pub fn plot(&mut self, coord: Float2, pixel: char) {
         self.plot_raw(self.coord_to_pixel(coord), pixel);
     }
 
@@ -77,7 +77,6 @@ impl Canvas {
 
     pub fn draw_tri_raw(&mut self,
             p0: (u16, u16), p1: (u16, u16), p2: (u16, u16),
-            fill: Pixel
         ) {
         let bounds = (
             (min(min(p0.0, p1.0), p2.0), min(min(p0.1, p1.1), p2.1)),
@@ -93,47 +92,27 @@ impl Canvas {
         for x in bounds.0.0..=bounds.1.0 {
             for y in bounds.0.1..=bounds.1.1 {
                 if Self::is_in_tri((x, y), p0, p1, p2) {
+                    // Shading
+                    let gradient = " `.-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@";
+
+                    let brightness = (x - bounds.0.0) as f32 / (bounds.1.0 - bounds.0.0) as f32;
+                    let level = (brightness * (gradient.len() - 1) as f32).floor() as usize;
+                    let fill = gradient.chars().nth(level).unwrap().into();
+
                     self.plot_raw((x, y), fill)
                 };
             }
         }
     }
 
-    pub fn draw_tri(&mut self, p0: Float2, p1: Float2, p2: Float2, fill: Pixel) {
-        self.draw_tri_raw(self.coord_to_pixel(p0), self.coord_to_pixel(p1), self.coord_to_pixel(p2), fill);
+    pub fn draw_tri(&mut self, p0: Float2, p1: Float2, p2: Float2) {
+        self.draw_tri_raw(self.coord_to_pixel(p0), self.coord_to_pixel(p1), self.coord_to_pixel(p2));
     }
 
     // 2D coord to 1D buffer coord
     fn coord_1d(&self, coord: (u16, u16)) -> usize {
         // TODO: Add some bounds checking
         (coord.0 + coord.1 * self.size.0) as usize
-    }
-}
-
-#[derive(Clone, Copy)]
-pub struct Pixel {
-    pub content: char,
-    pub color: termion::color::Rgb,
-}
-
-impl Pixel {
-    pub fn blank() -> Self {
-        Self {
-            content: ' ',
-            color: termion::color::Rgb(255, 255, 255),
-        }
-    }
-}
-
-impl ToString for Pixel {
-    fn to_string(&self) -> String {
-        format!("{}{}", termion::color::Fg(self.color), self.content)
-    }
-}
-
-impl From<char> for Pixel {
-    fn from(content: char) -> Self {
-        Self { content, color: termion::color::Rgb(255, 255, 255) }
     }
 }
 

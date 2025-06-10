@@ -1,4 +1,4 @@
-use crate::canvas::{Canvas, Pixel};
+use crate::canvas::Canvas;
 
 use crate::vector::{Float2, Float3};
 use crate::transform::{Transform, Rotation};
@@ -60,9 +60,7 @@ impl Model {
 
         let mut index: u8 = 0;
         for face in &self.faces {
-            let fill = ((b'a' + index.rem_euclid(26)) as char).into();
-
-            canvas.draw_tri(screen_verts[face.0 - 1], screen_verts[face.1 - 1], screen_verts[face.2 - 1], fill);
+            canvas.draw_tri(screen_verts[face.0 - 1], screen_verts[face.1 - 1], screen_verts[face.2 - 1]);
             if index < 254 { index += 1 } else { index = 0 };
         }
 
