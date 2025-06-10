@@ -6,7 +6,7 @@ use crate::transform::{Transform, Rotation};
 pub struct Model {
     verts: Vec<Float3>,
     vert_normals: Vec<Float3>,
-    faces: Vec<(usize, usize, usize)>,
+    faces: Vec<((usize, usize, usize), (usize, usize, usize))>,
 
     transform: Transform
 }
@@ -35,12 +35,24 @@ impl Model {
                     )
                 },
                 "f" => {
+                    // TODO: Surely can be done without collecting
+                    if parts[1].split('/').collect::<Vec<_>>().len() < 3 {
+                        // TODO: Make this an error, or handle it propperly
+                        panic!("3D models must include pre-calculated normals");
+                    }
+
+                    // TODO: This is a bit silly
                     model.faces.push(
-                        (
+                        ((
                             parts[1].split('/').collect::<Vec<_>>()[0].parse::<usize>().unwrap(),
                             parts[2].split('/').collect::<Vec<_>>()[0].parse::<usize>().unwrap(),
                             parts[3].split('/').collect::<Vec<_>>()[0].parse::<usize>().unwrap(),
-                        )
+                        ),
+                        (
+                            parts[1].split('/').collect::<Vec<_>>()[2].parse::<usize>().unwrap(),
+                            parts[2].split('/').collect::<Vec<_>>()[2].parse::<usize>().unwrap(),
+                            parts[3].split('/').collect::<Vec<_>>()[2].parse::<usize>().unwrap(),
+                        ))
                     )
                 },
                 _ => (),
@@ -58,9 +70,17 @@ impl Model {
             camera.world_to_screen(vert)
         }).collect();
 
+        let world_normals: Vec<Float3> = self.vert_normals.iter().map(|normal| {
+            // Apply transform
+            self.transform.apply(*normal)
+        }).collect();
+
         let mut index: u8 = 0;
         for face in &self.faces {
-            canvas.draw_tri(screen_verts[face.0 - 1], screen_verts[face.1 - 1], screen_verts[face.2 - 1]);
+            canvas.draw_tri(
+                screen_verts[face.0.0 - 1], screen_verts[face.0.1 - 1], screen_verts[face.0.2 - 1],
+                world_normals[face.1.0 - 1], world_normals[face.1.1 - 1], world_normals[face.1.2 - 1],
+            );
             if index < 254 { index += 1 } else { index = 0 };
         }
 

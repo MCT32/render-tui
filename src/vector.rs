@@ -79,6 +79,10 @@ impl Float3 {
     pub fn zero() -> Self {
         Self { x: 0.0, y: 0.0, z: 0.0 }
     }
+
+    pub fn dot(self, other: Float3) -> f32 {
+        self.x * other.x + self.y * other.y + self.z * other.z
+    }
 }
 
 impl From<(f32, f32, f32)> for Float3 {
